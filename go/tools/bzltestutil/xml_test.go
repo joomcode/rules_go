@@ -36,7 +36,7 @@ func TestJSON2XML(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			got, err := json2xml(orig, "pkg/testing")
+			got, err := events2xml(orig, "pkg/testing")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -48,7 +48,7 @@ func TestJSON2XML(t *testing.T) {
 			}
 
 			if !bytes.Equal(got, want) {
-				t.Errorf("json2xml for %s does not match, got:\n%s\nwant:\n%s\n", name, string(got), string(want))
+				t.Errorf("events2xml for %s does not match, got:\n%s\nwant:\n%s\n", name, string(got), string(want))
 			}
 		})
 	}

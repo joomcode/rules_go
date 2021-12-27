@@ -15,7 +15,6 @@
 package bzltestutil
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -59,8 +58,7 @@ func shouldAddTestV() bool {
 }
 
 func Wrap(pkg string) error {
-	var jsonBuffer bytes.Buffer
-	jsonConverter := NewConverter(&jsonBuffer, pkg, Timestamp)
+	testOutputConverter := NewMixedConverter(pkg, Timestamp)
 
 	args := os.Args[1:]
 	if shouldAddTestV() {
@@ -72,12 +70,13 @@ func Wrap(pkg string) error {
 	}
 	cmd := exec.Command(exePath, args...)
 	cmd.Env = append(os.Environ(), "GO_TEST_WRAP=0")
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = io.MultiWriter(os.Stdout, jsonConverter)
+	cmd.Stderr = io.MultiWriter(os.Stderr, testOutputConverter.stderrConverter)
+	cmd.Stdout = io.MultiWriter(os.Stdout, testOutputConverter.stdoutConverter)
 	err := cmd.Run()
-	jsonConverter.Close()
+	testOutputConverter.Close()
+
 	if out, ok := os.LookupEnv("XML_OUTPUT_FILE"); ok {
-		werr := writeReport(jsonBuffer, pkg, out)
+		werr := writeReport(testOutputConverter.GetOutput(), pkg, out)
 		if werr != nil {
 			if err != nil {
 				return fmt.Errorf("error while generating testreport: %s, (error wrapping test execution: %s)", werr, err)
@@ -88,8 +87,8 @@ func Wrap(pkg string) error {
 	return err
 }
 
-func writeReport(jsonBuffer bytes.Buffer, pkg string, path string) error {
-	xml, cerr := json2xml(&jsonBuffer, pkg)
+func writeReport(events []event, pkg string, path string) error {
+	xml, cerr := events2xml(events, pkg)
 	if cerr != nil {
 		return fmt.Errorf("error converting test output to xml: %s", cerr)
 	}
