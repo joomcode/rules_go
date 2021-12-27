@@ -15,14 +15,9 @@
 package bzltestutil
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io"
-	"path"
 	"sort"
-	"strings"
-	"time"
 )
 
 type xmlTestSuites struct {
@@ -39,6 +34,8 @@ type xmlTestSuite struct {
 	Tests     int           `xml:"tests,attr"`
 	Time      string        `xml:"time,attr"`
 	Name      string        `xml:"name,attr"`
+	Stdout    *xmlMessage   `xml:"system-out,omitempty"`
+	Stderr    *xmlMessage   `xml:"system-err,omitempty"`
 }
 
 type xmlTestCase struct {
@@ -49,33 +46,26 @@ type xmlTestCase struct {
 	Failure   *xmlMessage `xml:"failure,omitempty"`
 	Error     *xmlMessage `xml:"error,omitempty"`
 	Skipped   *xmlMessage `xml:"skipped,omitempty"`
+	Stdout    *xmlMessage `xml:"system-out,omitempty"`
+	Stderr    *xmlMessage `xml:"system-err,omitempty"`
 }
 
 type xmlMessage struct {
-	Message  string `xml:"message,attr"`
-	Type     string `xml:"type,attr"`
+	Message  string `xml:"message,attr,omitempty"`
+	Type     string `xml:"type,attr,omitempty"`
 	Contents string `xml:",chardata"`
-}
-
-// jsonEvent as encoded by the test2json package.
-type jsonEvent struct {
-	Time    *time.Time
-	Action  string
-	Package string
-	Test    string
-	Elapsed *float64
-	Output  string
 }
 
 type testCase struct {
 	state    string
-	output   strings.Builder
+	output   *Output
+	stderr   *Output
 	duration *float64
 }
 
-// json2xml converts test2json's output into an xml output readable by Bazel.
+// events2xml converts test2json's output into an xml output readable by Bazel.
 // http://windyroad.com.au/dl/Open%20Source/JUnit.xsd
-func json2xml(r io.Reader, pkgName string) ([]byte, error) {
+func events2xml(events []event, pkgName string) ([]byte, error) {
 	var pkgDuration *float64
 	testcases := make(map[string]*testCase)
 	testCaseByName := func(name string) *testCase {
@@ -83,19 +73,16 @@ func json2xml(r io.Reader, pkgName string) ([]byte, error) {
 			return nil
 		}
 		if _, ok := testcases[name]; !ok {
-			testcases[name] = &testCase{}
+			testcases[name] = &testCase{
+				output: NewOutput(defaultOutputLimit),
+				stderr: NewOutput(defaultOutputLimit),
+			}
 		}
 		return testcases[name]
 	}
+	var suiteStdout, suiteStderr string
 
-	dec := json.NewDecoder(r)
-	for {
-		var e jsonEvent
-		if err := dec.Decode(&e); err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, fmt.Errorf("error decoding test2json output: %s", err)
-		}
+	for _, e := range events {
 		switch s := e.Action; s {
 		case "run":
 			if c := testCaseByName(e.Test); c != nil {
@@ -104,6 +91,14 @@ func json2xml(r io.Reader, pkgName string) ([]byte, error) {
 		case "output":
 			if c := testCaseByName(e.Test); c != nil {
 				c.output.WriteString(e.Output)
+			} else {
+				suiteStdout += string(e.Output)
+			}
+		case "stderr":
+			if c := testCaseByName(e.Test); c != nil {
+				c.stderr.WriteString(e.Output)
+			} else {
+				suiteStderr += string(e.Output)
 			}
 		case "skip":
 			if c := testCaseByName(e.Test); c != nil {
@@ -128,10 +123,10 @@ func json2xml(r io.Reader, pkgName string) ([]byte, error) {
 		}
 	}
 
-	return xml.MarshalIndent(toXML(pkgName, pkgDuration, testcases), "", "\t")
+	return xml.MarshalIndent(toXML(pkgName, pkgDuration, testcases, suiteStdout, suiteStderr), "", "\t")
 }
 
-func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase) *xmlTestSuites {
+func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase, suiteStdout string, suiteStderr string) *xmlTestSuites {
 	cases := make([]string, 0, len(testcases))
 	for k := range testcases {
 		cases = append(cases, k)
@@ -139,6 +134,12 @@ func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase)
 	sort.Strings(cases)
 	suite := xmlTestSuite{
 		Name: pkgName,
+		Stdout: &xmlMessage{
+			Contents: suiteStdout,
+		},
+		Stderr: &xmlMessage{
+			Contents: suiteStderr,
+		},
 	}
 	if pkgDuration != nil {
 		suite.Time = fmt.Sprintf("%.3f", *pkgDuration)
@@ -148,7 +149,13 @@ func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase)
 		suite.Tests++
 		newCase := xmlTestCase{
 			Name:      name,
-			Classname: path.Base(pkgName),
+			Classname: "bazel/" + pkgName,
+			Stdout: &xmlMessage{
+				Contents: c.output.String(),
+			},
+			Stderr: &xmlMessage{
+				Contents: c.stderr.String(),
+			},
 		}
 		if c.duration != nil {
 			newCase.Time = fmt.Sprintf("%.3f", *c.duration)
@@ -157,14 +164,12 @@ func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase)
 		case "skip":
 			suite.Skipped++
 			newCase.Skipped = &xmlMessage{
-				Message:  "Skipped",
-				Contents: c.output.String(),
+				Message: "Skipped",
 			}
 		case "fail":
 			suite.Failures++
 			newCase.Failure = &xmlMessage{
-				Message:  "Failed",
-				Contents: c.output.String(),
+				Message: "Failed",
 			}
 		case "pass":
 			break
