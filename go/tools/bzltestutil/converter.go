@@ -17,11 +17,9 @@ package bzltestutil
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
-	"io"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -32,39 +30,76 @@ type Mode int
 
 const (
 	Timestamp Mode = 1 << iota // include Time in events
+	Stderr    Mode = 2 << iota // put everything in output without parsing
 )
 
-// event is the JSON struct we emit.
+// event is the struct we emit.
 type event struct {
-	Time    *time.Time `json:",omitempty"`
+	Time    *time.Time
 	Action  string
-	Package string     `json:",omitempty"`
-	Test    string     `json:",omitempty"`
-	Elapsed *float64   `json:",omitempty"`
-	Output  *textBytes `json:",omitempty"`
+	Package string
+	Test    string
+	Elapsed *float64
+	Output  string
 }
 
-// textBytes is a hack to get JSON to emit a []byte as a string
-// without actually copying it to a string.
-// It implements encoding.TextMarshaler, which returns its text form as a []byte,
-// and then json encodes that text form as a string (which was our goal).
-type textBytes []byte
+type MixedConverter struct {
+	context         *ExecutionContext
+	stdoutConverter *Converter
+	stderrConverter *Converter
+}
 
-func (b textBytes) MarshalText() ([]byte, error) { return b, nil }
+type ExecutionContext struct {
+	output   []event
+	pkg      string    // package to name in events
+	start    time.Time // time converter started
+	testName string    // name of current test, for output attribution
+	report   []*event  // pending test result reports (nested for subtests)
+	result   string    // overall test result if seen
+	mutex    sync.Mutex
+}
+
+func (c* ExecutionContext) GetTestName() string {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	return c.testName
+}
+
+func (c* ExecutionContext) UpdateTestName(newTestName string) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	c.testName = newTestName
+}
 
 // A Converter holds the state of a test-to-JSON conversion.
 // It implements io.WriteCloser; the caller writes test output in,
 // and the converter writes JSON output to w.
 type Converter struct {
-	w        io.Writer  // JSON output stream
-	pkg      string     // package to name in events
-	mode     Mode       // mode bits
-	start    time.Time  // time converter started
-	testName string     // name of current test, for output attribution
-	report   []*event   // pending test result reports (nested for subtests)
-	result   string     // overall test result if seen
-	input    lineBuffer // input buffer
-	output   lineBuffer // output buffer
+	context *ExecutionContext
+	mode    Mode       // mode bits
+	input   lineBuffer // input buffer
+	output  lineBuffer // output buffer
+}
+
+func NewMixedConverter(pkg string, mode Mode) *MixedConverter {
+	context := ExecutionContext{
+		pkg:   pkg,
+		start: time.Now(),
+	}
+	return &MixedConverter{
+		context:         &context,
+		stdoutConverter: NewConverter(&context, mode),
+		stderrConverter: NewConverter(&context, mode|Stderr),
+	}
+}
+
+func (c *MixedConverter) Close() {
+	c.stderrConverter.Close()
+	c.stdoutConverter.Close()
+}
+
+func (c *MixedConverter) GetOutput() []event {
+	return c.context.output
 }
 
 // inBuffer and outBuffer are the input and output buffer sizes.
@@ -87,8 +122,9 @@ type Converter struct {
 // between wanting to avoid splitting an output line and not wanting to
 // generate enormous output events.
 var (
-	inBuffer  = 4096
-	outBuffer = 1024
+	inBuffer                  = 4096
+	outBuffer                 = 1024
+	defaultOutputLimit uint64 = 1024 * 32
 )
 
 // NewConverter returns a "test to json" converter.
@@ -107,13 +143,11 @@ var (
 //
 // The pkg string, if present, specifies the import path to
 // report in the JSON stream.
-func NewConverter(w io.Writer, pkg string, mode Mode) *Converter {
+func NewConverter(context *ExecutionContext, mode Mode) *Converter {
 	c := new(Converter)
 	*c = Converter{
-		w:     w,
-		pkg:   pkg,
-		mode:  mode,
-		start: time.Now(),
+		context: context,
+		mode:    mode,
 		input: lineBuffer{
 			b:    make([]byte, 0, inBuffer),
 			line: c.handleInputLine,
@@ -137,9 +171,9 @@ func (c *Converter) Write(b []byte) (int, error) {
 // Exited marks the test process as having exited with the given error.
 func (c *Converter) Exited(err error) {
 	if err == nil {
-		c.result = "pass"
+		c.context.result = "pass"
 	} else {
-		c.result = "fail"
+		c.context.result = "fail"
 	}
 }
 
@@ -177,22 +211,26 @@ var (
 // It must write the line to c.output but may choose to do so
 // before or after emitting other events.
 func (c *Converter) handleInputLine(line []byte) {
+	if c.mode&Stderr != 0 {
+		c.output.write(line)
+		return
+	}
 	// Final PASS or FAIL.
 	if bytes.Equal(line, bigPass) || bytes.Equal(line, bigFail) || bytes.HasPrefix(line, bigFailErrorPrefix) {
 		c.flushReport(0)
 		c.output.write(line)
 		if bytes.Equal(line, bigPass) {
-			c.result = "pass"
+			c.context.result = "pass"
 		} else {
-			c.result = "fail"
+			c.context.result = "fail"
 		}
 		return
 	}
 
 	// Special case for entirely skipped test binary: "?   \tpkgname\t[no test files]\n" is only line.
 	// Report it as plain output but remember to say skip in the final summary.
-	if bytes.HasPrefix(line, skipLinePrefix) && bytes.HasSuffix(line, skipLineSuffix) && len(c.report) == 0 {
-		c.result = "skip"
+	if bytes.HasPrefix(line, skipLinePrefix) && bytes.HasSuffix(line, skipLineSuffix) && len(c.context.report) == 0 {
+		c.context.result = "skip"
 	}
 
 	// "=== RUN   "
@@ -236,8 +274,8 @@ func (c *Converter) handleInputLine(line []byte) {
 		// then the output must have included extra indentation. We can't
 		// determine which subtest produced this output, so we default to the
 		// old behaviour of assuming the most recently run subtest produced it.
-		if indent > 0 && indent <= len(c.report) {
-			c.testName = c.report[indent-1].Test
+		if indent > 0 && indent <= len(c.context.report) {
+			c.context.UpdateTestName(c.context.report[indent-1].Test)
 		}
 		c.output.write(origLine)
 		return
@@ -268,7 +306,7 @@ func (c *Converter) handleInputLine(line []byte) {
 			}
 			name = name[:i]
 		}
-		if len(c.report) < indent {
+		if len(c.context.report) < indent {
 			// Nested deeper than expected.
 			// Treat this line as plain output.
 			c.output.write(origLine)
@@ -277,15 +315,15 @@ func (c *Converter) handleInputLine(line []byte) {
 		// Flush reports at this indentation level or deeper.
 		c.flushReport(indent)
 		e.Test = name
-		c.testName = name
-		c.report = append(c.report, e)
+		c.context.UpdateTestName(name)
+		c.context.report = append(c.context.report, e)
 		c.output.write(origLine)
 		return
 	}
 	// === update.
 	// Finish any pending PASS/FAIL reports.
 	c.flushReport(0)
-	c.testName = name
+	c.context.UpdateTestName(name)
 
 	if action == "pause" {
 		// For a pause, we want to write the pause notification before
@@ -303,10 +341,10 @@ func (c *Converter) handleInputLine(line []byte) {
 
 // flushReport flushes all pending PASS/FAIL reports at levels >= depth.
 func (c *Converter) flushReport(depth int) {
-	c.testName = ""
-	for len(c.report) > depth {
-		e := c.report[len(c.report)-1]
-		c.report = c.report[:len(c.report)-1]
+	c.context.UpdateTestName("")
+	for len(c.context.report) > depth {
+		e := c.context.report[len(c.context.report)-1]
+		c.context.report = c.context.report[:len(c.context.report)-1]
 		c.writeEvent(e)
 	}
 }
@@ -317,10 +355,11 @@ func (c *Converter) flushReport(depth int) {
 func (c *Converter) Close() error {
 	c.input.flush()
 	c.output.flush()
-	if c.result != "" {
-		e := &event{Action: c.result}
+
+	if c.context.result != "" && c.mode&Stderr == 0 {
+		e := &event{Action: c.context.result}
 		if c.mode&Timestamp != 0 {
-			dt := time.Since(c.start).Round(1 * time.Millisecond).Seconds()
+			dt := time.Since(c.context.start).Round(1 * time.Millisecond).Seconds()
 			e.Elapsed = &dt
 		}
 		c.writeEvent(e)
@@ -332,29 +371,27 @@ func (c *Converter) Close() error {
 func (c *Converter) writeOutputEvent(out []byte) {
 	c.writeEvent(&event{
 		Action: "output",
-		Output: (*textBytes)(&out),
+		Output: string(out),
 	})
 }
 
 // writeEvent writes a single event.
 // It adds the package, time (if requested), and test name (if needed).
 func (c *Converter) writeEvent(e *event) {
-	e.Package = c.pkg
+	e.Package = c.context.pkg
 	if c.mode&Timestamp != 0 {
 		t := time.Now()
 		e.Time = &t
 	}
 	if e.Test == "" {
-		e.Test = c.testName
+		e.Test = c.context.GetTestName()
 	}
-	js, err := json.Marshal(e)
-	if err != nil {
-		// Should not happen - event is valid for json.Marshal.
-		c.w.Write([]byte(fmt.Sprintf("testjson internal error: %v\n", err)))
-		return
+	if c.mode&Stderr != 0 {
+		e.Action = "stderr"
 	}
-	js = append(js, '\n')
-	c.w.Write(js)
+	c.context.mutex.Lock()
+	defer c.context.mutex.Unlock()
+	c.context.output = append(c.context.output, *e)
 }
 
 // A lineBuffer is an I/O buffer that reacts to writes by invoking

@@ -1,0 +1,137 @@
+=== RUN   TestFuture
+=== RUN   TestFuture/Smoke
+=== RUN   TestFuture/Context
+=== RUN   TestFuture/Timeout
+=== RUN   TestFuture/WithTimeout
+--- PASS: TestFuture (0.10s)
+    --- PASS: TestFuture/Smoke (0.00s)
+    --- PASS: TestFuture/Context (0.00s)
+    --- PASS: TestFuture/Timeout (0.10s)
+    --- PASS: TestFuture/WithTimeout (0.00s)
+=== RUN   TestLazyValue
+=== RUN   TestLazyValue/Success
+=== RUN   TestLazyValue/ErrorOnInitialization
+--- PASS: TestLazyValue (0.00s)
+    --- PASS: TestLazyValue/Success (0.00s)
+    --- PASS: TestLazyValue/ErrorOnInitialization (0.00s)
+=== RUN   TestTickerWithContext
+=== RUN   TestTickerWithContext/TestDoesntBlockOnOuterChan
+=== RUN   TestTickerWithContext/TestTicks
+=== RUN   TestTickerWithContext/TestTimelyStop
+--- PASS: TestTickerWithContext (0.01s)
+    --- PASS: TestTickerWithContext/TestDoesntBlockOnOuterChan (0.00s)
+    --- PASS: TestTickerWithContext/TestTicks (0.01s)
+    --- PASS: TestTickerWithContext/TestTimelyStop (0.00s)
+=== RUN   TestRotatableResource
+=== RUN   TestRotatableResource/TestConcurrentStress
+=== RUN   TestRotatableResource/TestEmptyAcquire
+=== RUN   TestRotatableResource/TestEmptyRelease
+=== RUN   TestRotatableResource/TestReleaseDoesntBlockAcquire
+=== RUN   TestRotatableResource/TestRotate
+=== RUN   TestRotatableResource/TestRotateTwice
+=== RUN   TestRotatableResource/TestRotateWaitsForRelease
+--- PASS: TestRotatableResource (1.01s)
+    --- PASS: TestRotatableResource/TestConcurrentStress (1.00s)
+    --- PASS: TestRotatableResource/TestEmptyAcquire (0.00s)
+    --- PASS: TestRotatableResource/TestEmptyRelease (0.00s)
+    --- PASS: TestRotatableResource/TestReleaseDoesntBlockAcquire (0.00s)
+    --- PASS: TestRotatableResource/TestRotate (0.00s)
+    --- PASS: TestRotatableResource/TestRotateTwice (0.00s)
+    --- PASS: TestRotatableResource/TestRotateWaitsForRelease (0.00s)
+=== RUN   TestExecuteWithTimeout
+=== RUN   TestExecuteWithTimeout/Positive
+=== RUN   TestExecuteWithTimeout/Negative
+=== RUN   TestExecuteWithTimeout/NegativeCtx
+--- PASS: TestExecuteWithTimeout (0.02s)
+    --- PASS: TestExecuteWithTimeout/Positive (0.00s)
+    --- PASS: TestExecuteWithTimeout/Negative (0.01s)
+    --- PASS: TestExecuteWithTimeout/NegativeCtx (0.01s)
+=== RUN   TestExecuteVoidWithTimeout
+=== RUN   TestExecuteVoidWithTimeout/Positive
+=== RUN   TestExecuteVoidWithTimeout/Negative
+=== RUN   TestExecuteVoidWithTimeout/NegativeCtx
+--- PASS: TestExecuteVoidWithTimeout (0.02s)
+    --- PASS: TestExecuteVoidWithTimeout/Positive (0.00s)
+    --- PASS: TestExecuteVoidWithTimeout/Negative (0.01s)
+    --- PASS: TestExecuteVoidWithTimeout/NegativeCtx (0.01s)
+=== RUN   TestElasticPool
+=== RUN   TestElasticPool/it_works
+=== RUN   TestElasticPool/it_handles_panic
+=== RUN   TestElasticPool/it_provides_concurrency
+--- PASS: TestElasticPool (0.00s)
+    --- PASS: TestElasticPool/it_works (0.00s)
+    --- PASS: TestElasticPool/it_handles_panic (0.00s)
+    --- PASS: TestElasticPool/it_provides_concurrency (0.00s)
+=== RUN   TestWorkerPool
+=== RUN   TestWorkerPool/it_works
+=== RUN   TestWorkerPool/it_handles_panic
+=== RUN   TestWorkerPool/it_limits_concurrency
+--- PASS: TestWorkerPool (0.00s)
+    --- PASS: TestWorkerPool/it_works (0.00s)
+    --- PASS: TestWorkerPool/it_handles_panic (0.00s)
+    --- PASS: TestWorkerPool/it_limits_concurrency (0.00s)
+=== RUN   TestWorkerPoolShutdown
+--- PASS: TestWorkerPoolShutdown (0.00s)
+=== RUN   TestWorkerPoolShutdownTimeoutError
+--- PASS: TestWorkerPoolShutdownTimeoutError (1.00s)
+=== RUN   TestWorkerPoolShutdownTimeoutCouldNotAddTask
+--- PASS: TestWorkerPoolShutdownTimeoutCouldNotAddTask (0.00s)
+=== RUN   TestAcquireAvailableWriteTokens
+--- PASS: TestAcquireAvailableWriteTokens (0.01s)
+=== RUN   TestAcquireAvailableWriteTokensWithLimit
+--- PASS: TestAcquireAvailableWriteTokensWithLimit (0.00s)
+=== RUN   TestCappedSimple
+--- PASS: TestCappedSimple (0.03s)
+=== RUN   TestCappedNoPrefetch
+--- PASS: TestCappedNoPrefetch (0.03s)
+=== RUN   TestCappedLargePrefetch
+--- PASS: TestCappedLargePrefetch (0.03s)
+=== RUN   TestCappedManyReaders
+--- PASS: TestCappedManyReaders (0.03s)
+=== RUN   TestCappedStress
+=== RUN   TestCappedStress/[1-1024](timeout)
+=== RUN   TestCappedStress/[1-1024](ctxCancel)
+=== RUN   TestCappedStress/[1-1024](ctxDeadline)
+=== RUN   TestCappedStress/[32-4096](timeout)
+=== RUN   TestCappedStress/[32-4096](ctxCancel)
+=== RUN   TestCappedStress/[32-4096](ctxDeadline)
+--- PASS: TestCappedStress (3.58s)
+    --- PASS: TestCappedStress/[1-1024](timeout) (0.14s)
+    --- PASS: TestCappedStress/[1-1024](ctxCancel) (0.16s)
+    --- PASS: TestCappedStress/[1-1024](ctxDeadline) (0.16s)
+    --- PASS: TestCappedStress/[32-4096](timeout) (0.57s)
+    --- PASS: TestCappedStress/[32-4096](ctxCancel) (0.53s)
+    --- PASS: TestCappedStress/[32-4096](ctxDeadline) (2.02s)
+=== RUN   TestReadAfterClose
+--- PASS: TestReadAfterClose (0.04s)
+=== RUN   TestLockerSimple
+--- PASS: TestLockerSimple (0.01s)
+=== RUN   TestLockerStress
+--- PASS: TestLockerStress (1.18s)
+=== RUN   TestLockerStressExpired
+--- PASS: TestLockerStressExpired (5.45s)
+=== RUN   TestSemaphoreAcquire
+--- PASS: TestSemaphoreAcquire (0.00s)
+=== RUN   TestSemaphoreTryAcquire
+--- PASS: TestSemaphoreTryAcquire (0.00s)
+=== RUN   TestSemaphoreAcquireLimit
+--- PASS: TestSemaphoreAcquireLimit (0.00s)
+=== RUN   TestSemaphoreRelease
+--- PASS: TestSemaphoreRelease (0.00s)
+=== RUN   TestSemaphoreAcquireWithTimeout
+--- PASS: TestSemaphoreAcquireWithTimeout (0.00s)
+=== RUN   TestSemaphoreAcquireWithTimeoutRace
+--- PASS: TestSemaphoreAcquireWithTimeoutRace (0.08s)
+=== RUN   TestSemaphoreReleaseError
+--- PASS: TestSemaphoreReleaseError (0.00s)
+=== RUN   TestSemaphoreReleasePanic
+--- PASS: TestSemaphoreReleasePanic (0.00s)
+=== RUN   TestEmptyLatch
+--- PASS: TestEmptyLatch (0.00s)
+=== RUN   TestLatch
+--- PASS: TestLatch (0.00s)
+=== RUN   TestLatchToken
+--- PASS: TestLatchToken (0.00s)
+=== RUN   TestLatchChan
+--- PASS: TestLatchChan (0.00s)
+PASS

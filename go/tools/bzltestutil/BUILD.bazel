@@ -4,7 +4,8 @@ go_tool_library(
     name = "bzltestutil",
     srcs = [
         "init.go",
-        "test2json.go",
+        "converter.go",
+        "testreporter.go",
         "wrap.go",
         "xml.go",
     ],
@@ -16,8 +17,9 @@ go_test(
     name = "bzltestutil_test",
     srcs = [
         "init.go",
-        "test2json.go",
+        "converter.go",
         "wrap.go",
+        "testreporter.go",
         "wrap_test.go",
         "xml.go",
         "xml_test.go",
