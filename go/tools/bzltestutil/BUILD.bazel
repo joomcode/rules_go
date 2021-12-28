@@ -17,8 +17,9 @@ go_test(
     name = "bzltestutil_test",
     srcs = [
         "init.go",
-        "test2json.go",
+        "converter.go",
         "wrap.go",
+        "testreporter.go",
         "wrap_test.go",
         "xml.go",
         "xml_test.go",

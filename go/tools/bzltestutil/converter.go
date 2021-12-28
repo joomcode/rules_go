@@ -59,6 +59,18 @@ type ExecutionContext struct {
 	mutex    sync.Mutex
 }
 
+func (c* ExecutionContext) GetTestName() string {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	return c.testName
+}
+
+func (c* ExecutionContext) UpdateTestName(newTestName string) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	c.testName = newTestName
+}
+
 // A Converter holds the state of a test-to-JSON conversion.
 // It implements io.WriteCloser; the caller writes test output in,
 // and the converter writes JSON output to w.
@@ -263,7 +275,7 @@ func (c *Converter) handleInputLine(line []byte) {
 		// determine which subtest produced this output, so we default to the
 		// old behaviour of assuming the most recently run subtest produced it.
 		if indent > 0 && indent <= len(c.context.report) {
-			c.context.testName = c.context.report[indent-1].Test
+			c.context.UpdateTestName(c.context.report[indent-1].Test)
 		}
 		c.output.write(origLine)
 		return
@@ -303,7 +315,7 @@ func (c *Converter) handleInputLine(line []byte) {
 		// Flush reports at this indentation level or deeper.
 		c.flushReport(indent)
 		e.Test = name
-		c.context.testName = name
+		c.context.UpdateTestName(name)
 		c.context.report = append(c.context.report, e)
 		c.output.write(origLine)
 		return
@@ -311,7 +323,7 @@ func (c *Converter) handleInputLine(line []byte) {
 	// === update.
 	// Finish any pending PASS/FAIL reports.
 	c.flushReport(0)
-	c.context.testName = name
+	c.context.UpdateTestName(name)
 
 	if action == "pause" {
 		// For a pause, we want to write the pause notification before
@@ -329,7 +341,7 @@ func (c *Converter) handleInputLine(line []byte) {
 
 // flushReport flushes all pending PASS/FAIL reports at levels >= depth.
 func (c *Converter) flushReport(depth int) {
-	c.context.testName = ""
+	c.context.UpdateTestName("")
 	for len(c.context.report) > depth {
 		e := c.context.report[len(c.context.report)-1]
 		c.context.report = c.context.report[:len(c.context.report)-1]
@@ -372,7 +384,7 @@ func (c *Converter) writeEvent(e *event) {
 		e.Time = &t
 	}
 	if e.Test == "" {
-		e.Test = c.context.testName
+		e.Test = c.context.GetTestName()
 	}
 	if c.mode&Stderr != 0 {
 		e.Action = "stderr"

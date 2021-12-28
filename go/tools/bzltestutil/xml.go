@@ -179,6 +179,8 @@ func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase,
 				Message:  "No pass/skip/fail event found for test",
 				Contents: c.output.String(),
 			}
+			// uncomment this string for wrap_test
+			//panic("No pass/skip/fail event found for test")
 		}
 		suite.TestCases = append(suite.TestCases, newCase)
 	}

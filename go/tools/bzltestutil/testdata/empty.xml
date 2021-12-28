@@ -1,3 +1,6 @@
 <testsuites>
-	<testsuite errors="0" failures="0" skipped="0" tests="0" time="" name="pkg/testing"></testsuite>
+	<testsuite errors="0" failures="0" skipped="0" tests="0" time="" name="pkg/testing">
+		<system-out></system-out>
+		<system-err></system-err>
+	</testsuite>
 </testsuites>

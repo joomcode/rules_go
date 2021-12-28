@@ -16,12 +16,25 @@ package bzltestutil
 
 import (
 	"bytes"
+	"encoding/json"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
+
+// jsonEvent as encoded by the test2json package.
+type jsonEvent struct {
+	Time    *time.Time
+	Action  string
+	Package string
+	Test    string
+	Elapsed *float64
+	Output  string
+}
 
 func TestJSON2XML(t *testing.T) {
 	files, err := filepath.Glob("testdata/*.json")
@@ -36,7 +49,25 @@ func TestJSON2XML(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			got, err := events2xml(orig, "pkg/testing")
+			dec := json.NewDecoder(orig)
+			var events []event
+			for {
+				var e jsonEvent
+				if err := dec.Decode(&e); err == io.EOF {
+					break
+				} else if err != nil {
+					t.Errorf("error decoding test2json output: %s", err)
+				}
+				events = append(events, event{
+					e.Time,
+					e.Action,
+					e.Package,
+					e.Test,
+					e.Elapsed,
+					e.Output,
+				})
+			}
+			got, err := events2xml(events, "pkg/testing")
 			if err != nil {
 				t.Fatal(err)
 			}

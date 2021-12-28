@@ -1,0 +1,170 @@
+ERROR [Dec 28 12:14:16.991] [log_id=h665f4a22] [log_trace_id=hb12acb3d] [logger=default] ALERT <!subteam^S7BCDKNGG|duty> Panic in safe processing: panic, cause: common.illegal_state: HOW
+Panic handler stack trace:
+goroutine 3356 [running]:
+runtime/debug.Stack()
+	/usr/local/go/src/runtime/debug/stack.go:24 +0x65
+github.com/joomcode/api/src/misc/generic/panicsafe.CatchWithHandler({0x14e5650, 0xc00011e008}, 0x145dedf)
+	src/misc/generic/panicsafe/panicsafe.go:37 +0x45
+panic({0x1402ac0, 0xc000276590})
+	/usr/local/go/src/runtime/panic.go:1038 +0x215
+github.com/joomcode/errorx.Panic(...)
+	/Users/vtomilov/go/pkg/mod/github.com/joomcode/errorx@v1.0.4-0.20210225114030-19776b64e89d/panic.go:22
+github.com/joomcode/api/src/misc/generic/concurrency.TestElasticPool.func2.1()
+	src/misc/generic/concurrency/worker_test.go:32 +0x94
+github.com/joomcode/api/src/misc/generic/panicsafe.RunHandlePanicAsError({0x14e5650, 0xc00011e008}, 0xc0002764e0, 0x0)
+	src/misc/generic/panicsafe/call.go:12 +0x7d
+github.com/joomcode/api/src/misc/generic/concurrency.(*ElasticPool).loop(0xc00077f500, 0xc0002764e0)
+	src/misc/generic/concurrency/worker.go:176 +0x114
+github.com/joomcode/api/src/misc/generic/concurrency.NewElasticPool.func1.1()
+	src/misc/generic/concurrency/worker.go:128 +0x25
+github.com/joomcode/api/src/misc/generic/panicsafe.Run({0x14e5650, 0xc00011e008}, 0x17f35a0)
+	src/misc/generic/panicsafe/call.go:7 +0x82
+created by github.com/joomcode/api/src/misc/generic/panicsafe.Go
+	src/misc/generic/panicsafe/go.go:6 +0x8f
+
+Panic originated from error, error: panic, cause: common.illegal_state: HOW
+ at github.com/joomcode/errorx.Panic()
+	/Users/vtomilov/go/pkg/mod/github.com/joomcode/errorx@v1.0.4-0.20210225114030-19776b64e89d/panic.go:22
+ ...
+ (5 duplicated frames)
+ ---------------------------------- 
+ at github.com/joomcode/api/src/misc/generic/concurrency.TestElasticPool.func2.1()
+	src/misc/generic/concurrency/worker_test.go:32
+ at github.com/joomcode/api/src/misc/generic/panicsafe.RunHandlePanicAsError()
+	src/misc/generic/panicsafe/call.go:12
+ at github.com/joomcode/api/src/misc/generic/concurrency.(*ElasticPool).loop()
+	src/misc/generic/concurrency/worker.go:176
+ at github.com/joomcode/api/src/misc/generic/concurrency.NewElasticPool.func1.1()
+	src/misc/generic/concurrency/worker.go:128
+ at github.com/joomcode/api/src/misc/generic/panicsafe.Run()
+	src/misc/generic/panicsafe/call.go:7
+ at runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1581
+ERROR [Dec 28 12:14:16.991] [log_id=h665f4a22] [log_trace_id=h4066e7e1] [logger=default] ALERT <!subteam^S7BCDKNGG|duty> Panic in safe processing: panic, cause: common.illegal_state: HOW
+Panic handler stack trace:
+goroutine 3324 [running]:
+runtime/debug.Stack()
+	/usr/local/go/src/runtime/debug/stack.go:24 +0x65
+github.com/joomcode/api/src/misc/generic/panicsafe.CatchWithHandler({0x14e5650, 0xc00011e008}, 0xfffffffe)
+	src/misc/generic/panicsafe/panicsafe.go:37 +0x45
+panic({0x1402ac0, 0xc000276770})
+	/usr/local/go/src/runtime/panic.go:1038 +0x215
+github.com/joomcode/errorx.Panic(...)
+	/Users/vtomilov/go/pkg/mod/github.com/joomcode/errorx@v1.0.4-0.20210225114030-19776b64e89d/panic.go:22
+github.com/joomcode/api/src/misc/generic/concurrency.TestWorkerPool.func2.1()
+	src/misc/generic/concurrency/worker_test.go:77 +0x94
+github.com/joomcode/api/src/misc/generic/panicsafe.RunHandlePanicAsError({0x14e5650, 0xc00011e008}, 0x1334ad9, 0xc0001f9a40)
+	src/misc/generic/panicsafe/call.go:12 +0x7d
+github.com/joomcode/api/src/misc/generic/concurrency.NewWorkerPool.func1()
+	src/misc/generic/concurrency/worker.go:62 +0x97
+github.com/joomcode/api/src/misc/generic/panicsafe.Run({0x14e5650, 0xc00011e008}, 0xc000306000)
+	src/misc/generic/panicsafe/call.go:7 +0x82
+created by github.com/joomcode/api/src/misc/generic/panicsafe.Go
+	src/misc/generic/panicsafe/go.go:6 +0x8f
+
+Panic originated from error, error: panic, cause: common.illegal_state: HOW
+ at github.com/joomcode/errorx.Panic()
+	/Users/vtomilov/go/pkg/mod/github.com/joomcode/errorx@v1.0.4-0.20210225114030-19776b64e89d/panic.go:22
+ ...
+ (4 duplicated frames)
+ ---------------------------------- 
+ at github.com/joomcode/api/src/misc/generic/concurrency.TestWorkerPool.func2.1()
+	src/misc/generic/concurrency/worker_test.go:77
+ at github.com/joomcode/api/src/misc/generic/panicsafe.RunHandlePanicAsError()
+	src/misc/generic/panicsafe/call.go:12
+ at github.com/joomcode/api/src/misc/generic/concurrency.NewWorkerPool.func1()
+	src/misc/generic/concurrency/worker.go:62
+ at github.com/joomcode/api/src/misc/generic/panicsafe.Run()
+	src/misc/generic/panicsafe/call.go:7
+ at runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1581
+ERROR [Dec 28 12:14:17.996] [log_id=h665f4a22] [log_trace_id=h22066ba9] [logger=default] ALERT <!subteam^S7BCDKNGG|duty> Panic in safe processing: send on closed channel
+Panic handler stack trace:
+goroutine 23 [running]:
+runtime/debug.Stack()
+	/usr/local/go/src/runtime/debug/stack.go:24 +0x65
+github.com/joomcode/api/src/misc/generic/panicsafe.Catch({0x14e5650, 0xc00011e008}, 0x0)
+	src/misc/generic/panicsafe/panicsafe.go:23 +0x54
+panic({0x14013e0, 0x14d8ae0})
+	/usr/local/go/src/runtime/panic.go:1047 +0x266
+github.com/joomcode/api/src/misc/generic/concurrency.(*WorkerPool).AddTask(...)
+	src/misc/generic/concurrency/worker.go:72
+github.com/joomcode/api/src/misc/generic/concurrency.TestWorkerPoolShutdownTimeoutCouldNotAddTask.func1()
+	src/misc/generic/concurrency/worker_test.go:159 +0x3f
+github.com/joomcode/api/src/misc/generic/panicsafe.Call({0x14e5650, 0xc00011e008}, 0xc000330750)
+	src/misc/generic/panicsafe/call.go:17 +0xd6
+github.com/joomcode/api/src/misc/generic/concurrency.TestWorkerPoolShutdownTimeoutCouldNotAddTask(0xc000882680)
+	src/misc/generic/concurrency/worker_test.go:158 +0x9c
+testing.tRunner(0xc000702820, 0x147c1b8)
+	/usr/local/go/src/testing/testing.go:1259 +0x102
+created by testing.(*T).Run
+	/usr/local/go/src/testing/testing.go:1306 +0x35a
+
+Panic originated from error, error: send on closed channel
+ at github.com/joomcode/api/src/misc/log/logx.(*Logger).Alertxf()
+	src/misc/log/logx/alert.go:42
+ at github.com/joomcode/api/src/misc/log/logx.Alertxf()
+	src/misc/log/logx/alert.go:50
+ at github.com/joomcode/api/src/misc/generic/panicsafe.defaultHandler()
+	src/misc/generic/panicsafe/panicsafe.go:46
+ at github.com/joomcode/api/src/misc/generic/panicsafe.Catch()
+	src/misc/generic/panicsafe/panicsafe.go:24
+ at runtime.gopanic()
+	/usr/local/go/src/runtime/panic.go:1047
+ at runtime.chansend()
+	/usr/local/go/src/runtime/chan.go:204
+ at runtime.chansend1()
+	/usr/local/go/src/runtime/chan.go:143
+ at github.com/joomcode/api/src/misc/generic/concurrency.(*WorkerPool).AddTask()
+	src/misc/generic/concurrency/worker.go:72
+ at github.com/joomcode/api/src/misc/generic/concurrency.TestWorkerPoolShutdownTimeoutCouldNotAddTask.func1()
+	src/misc/generic/concurrency/worker_test.go:159
+ at github.com/joomcode/api/src/misc/generic/panicsafe.Call()
+	src/misc/generic/panicsafe/call.go:17
+ at github.com/joomcode/api/src/misc/generic/concurrency.TestWorkerPoolShutdownTimeoutCouldNotAddTask()
+	src/misc/generic/concurrency/worker_test.go:158
+ at testing.tRunner()
+	/usr/local/go/src/testing/testing.go:1259
+ at runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1581
+ERROR [Dec 28 12:14:21.717] [log_id=h665f4a22] [log_trace_id=ha51512f3] [logger=default] ALERT <!subteam^S7BCDKNGG|duty> Panic in safe processing: send on closed channel
+Panic handler stack trace:
+goroutine 384538 [running]:
+runtime/debug.Stack()
+	/usr/local/go/src/runtime/debug/stack.go:24 +0x65
+github.com/joomcode/api/src/misc/generic/panicsafe.Catch({0x14e5650, 0xc00011e008}, 0xfffffffe)
+	src/misc/generic/panicsafe/panicsafe.go:23 +0x54
+panic({0x14013e0, 0x14d8ae0})
+	/usr/local/go/src/runtime/panic.go:1038 +0x215
+github.com/joomcode/api/src/misc/generic/concurrency.(*WriteToken).Write(0x1cc39, {0x13f6860, 0x17f3850})
+	src/misc/generic/concurrency/channel.go:131 +0x58
+github.com/joomcode/api/src/misc/generic/concurrency_test.(*channelTestUtil).NewErraticWriter.func1()
+	src/misc/generic/concurrency/channel_test.go:299 +0x125
+github.com/joomcode/api/src/misc/generic/panicsafe.Run({0x14e5650, 0xc00011e008}, 0x0)
+	src/misc/generic/panicsafe/call.go:7 +0x82
+created by github.com/joomcode/api/src/misc/generic/panicsafe.Go
+	src/misc/generic/panicsafe/go.go:6 +0x8f
+
+Panic originated from error, error: send on closed channel
+ at github.com/joomcode/api/src/misc/log/logx.(*Logger).Alertxf()
+	src/misc/log/logx/alert.go:42
+ at github.com/joomcode/api/src/misc/log/logx.Alertxf()
+	src/misc/log/logx/alert.go:50
+ at github.com/joomcode/api/src/misc/generic/panicsafe.defaultHandler()
+	src/misc/generic/panicsafe/panicsafe.go:46
+ at github.com/joomcode/api/src/misc/generic/panicsafe.Catch()
+	src/misc/generic/panicsafe/panicsafe.go:24
+ at runtime.gopanic()
+	/usr/local/go/src/runtime/panic.go:1038
+ at runtime.chansend()
+	/usr/local/go/src/runtime/chan.go:204
+ at runtime.chansend1()
+	/usr/local/go/src/runtime/chan.go:143
+ at github.com/joomcode/api/src/misc/generic/concurrency.(*WriteToken).Write()
+	src/misc/generic/concurrency/channel.go:131
+ at github.com/joomcode/api/src/misc/generic/concurrency_test.(*channelTestUtil).NewErraticWriter.func1()
+	src/misc/generic/concurrency/channel_test.go:299
+ at github.com/joomcode/api/src/misc/generic/panicsafe.Run()
+	src/misc/generic/panicsafe/call.go:7
+ at runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1581
