@@ -91,7 +91,7 @@ func (o *Output) joinedOutput(prefix, suffix []byte) []byte {
 	if i := bytes.LastIndexByte(prefix, '\n'); i > len(prefix)/2 {
 		prefix = prefix[:i+1]
 	}
-	if i := bytes.IndexByte(suffix, '\n'); i < len(suffix)/2 {
+	if i := bytes.IndexByte(suffix, '\n'); i < len(suffix)/2 && i > 0 {
 		suffix = suffix[i:]
 	}
 	message := fmt.Sprintf("\n... Too big output (total: %d, skipped: %d) ...\n", o.size, o.size-uint64(len(prefix)+len(suffix)))
