@@ -81,7 +81,7 @@ func events2xml(events []event, pkgName string) ([]byte, error) {
 		return testcases[name]
 	}
 	var suiteStdout, suiteStderr string
-
+	suiteTimedOut := false
 	for _, e := range events {
 		switch s := e.Action; s {
 		case "run":
@@ -92,13 +92,13 @@ func events2xml(events []event, pkgName string) ([]byte, error) {
 			if c := testCaseByName(e.Test); c != nil {
 				c.output.WriteString(e.Output)
 			} else {
-				suiteStdout += string(e.Output)
+				suiteStdout += e.Output
 			}
 		case "stderr":
 			if c := testCaseByName(e.Test); c != nil {
 				c.stderr.WriteString(e.Output)
 			} else {
-				suiteStderr += string(e.Output)
+				suiteStderr += e.Output
 			}
 		case "skip":
 			if c := testCaseByName(e.Test); c != nil {
@@ -120,13 +120,21 @@ func events2xml(events []event, pkgName string) ([]byte, error) {
 			} else {
 				pkgDuration = e.Elapsed
 			}
+		case "timeout":
+			suiteTimedOut = true
+			if c := testCaseByName(e.Test); c != nil {
+				c.state = s
+				c.duration = e.Elapsed
+			} else {
+				pkgDuration = e.Elapsed
+			}
 		}
 	}
 
-	return xml.MarshalIndent(toXML(pkgName, pkgDuration, testcases, suiteStdout, suiteStderr), "", "\t")
+	return xml.MarshalIndent(toXML(pkgName, pkgDuration, testcases, suiteStdout, suiteStderr, suiteTimedOut), "", "\t")
 }
 
-func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase, suiteStdout string, suiteStderr string) *xmlTestSuites {
+func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase, suiteStdout string, suiteStderr string, suiteTimedOut bool) *xmlTestSuites {
 	cases := make([]string, 0, len(testcases))
 	for k := range testcases {
 		cases = append(cases, k)
@@ -149,7 +157,7 @@ func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase,
 		suite.Tests++
 		newCase := xmlTestCase{
 			Name:      name,
-			Classname: "bazel/" + pkgName,
+			Classname: pkgName,
 			Stdout: &xmlMessage{
 				Contents: c.output.String(),
 			},
@@ -171,16 +179,27 @@ func toXML(pkgName string, pkgDuration *float64, testcases map[string]*testCase,
 			newCase.Failure = &xmlMessage{
 				Message: "Failed",
 			}
+		case "timeout":
+			suite.Failures++
+			newCase.Failure = &xmlMessage{
+				Message: "Timeout exceeded",
+			}
 		case "pass":
 			break
 		default:
-			suite.Errors++
-			newCase.Error = &xmlMessage{
-				Message:  "No pass/skip/fail event found for test",
-				Contents: c.output.String(),
+			if suiteTimedOut {
+				suite.Skipped++
+				newCase.Skipped = &xmlMessage{
+					Message: "Test from this suite timed out, execution aborted",
+				}
+			} else {
+				suite.Errors++
+				newCase.Error = &xmlMessage{
+					Message: "No pass/skip/fail/timeout event found for test",
+				}
+				// uncomment this string for wrap_test
+				//panic("No pass/skip/fail/timeout event found for test")
 			}
-			// uncomment this string for wrap_test
-			//panic("No pass/skip/fail event found for test")
 		}
 		suite.TestCases = append(suite.TestCases, newCase)
 	}

@@ -59,13 +59,13 @@ type ExecutionContext struct {
 	mutex    sync.Mutex
 }
 
-func (c* ExecutionContext) GetTestName() string {
+func (c *ExecutionContext) GetTestName() string {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	return c.testName
 }
 
-func (c* ExecutionContext) UpdateTestName(newTestName string) {
+func (c *ExecutionContext) UpdateTestName(newTestName string) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	c.testName = newTestName
@@ -79,6 +79,7 @@ type Converter struct {
 	mode    Mode       // mode bits
 	input   lineBuffer // input buffer
 	output  lineBuffer // output buffer
+	timeout bool
 }
 
 func NewMixedConverter(pkg string, mode Mode) *MixedConverter {
@@ -93,7 +94,8 @@ func NewMixedConverter(pkg string, mode Mode) *MixedConverter {
 	}
 }
 
-func (c *MixedConverter) Close() {
+func (c *MixedConverter) Close(timeout bool) {
+	c.stdoutConverter.timeout = timeout
 	c.stderrConverter.Close()
 	c.stdoutConverter.Close()
 }
@@ -355,6 +357,11 @@ func (c *Converter) flushReport(depth int) {
 func (c *Converter) Close() error {
 	c.input.flush()
 	c.output.flush()
+
+	if c.timeout && c.context.result == "" {
+		c.flushReport(0)
+		c.context.result = "timeout"
+	}
 
 	if c.context.result != "" && c.mode&Stderr == 0 {
 		e := &event{Action: c.context.result}
