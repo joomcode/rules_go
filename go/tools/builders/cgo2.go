@@ -94,32 +94,16 @@ func cgo2(goenv *env, goSrcs, cgoSrcs, cSrcs, cxxSrcs, objcSrcs, objcxxSrcs, sSr
 	combinedLdFlags = append(combinedLdFlags, defaultLdFlags()...)
 	os.Setenv("CGO_LDFLAGS", strings.Join(combinedLdFlags, " "))
 
-	// If cgo sources are in different directories, gather them into a temporary
-	// directory so we can use -srcdir.
-	srcDir = filepath.Dir(cgoSrcs[0])
-	srcsInSingleDir := true
-	for _, src := range cgoSrcs[1:] {
-		if filepath.Dir(src) != srcDir {
-			srcsInSingleDir = false
-			break
-		}
+	// Gather all cgo sources into a temporary directory so we can use -srcdir.
+	srcDir = filepath.Join(workDir, "cgosrcs")
+	if err := os.Mkdir(srcDir, 0777); err != nil {
+		return "", nil, nil, err
 	}
-
-	if srcsInSingleDir {
-		for i := range cgoSrcs {
-			cgoSrcs[i] = filepath.Base(cgoSrcs[i])
-		}
-	} else {
-		srcDir = filepath.Join(workDir, "cgosrcs")
-		if err := os.Mkdir(srcDir, 0777); err != nil {
-			return "", nil, nil, err
-		}
-		copiedSrcs, err := gatherSrcs(srcDir, cgoSrcs)
-		if err != nil {
-			return "", nil, nil, err
-		}
-		cgoSrcs = copiedSrcs
+	copiedSrcs, err := gatherSrcs(srcDir, cgoSrcs)
+	if err != nil {
+		return "", nil, nil, err
 	}
+	cgoSrcs = copiedSrcs
 
 	// Generate Go and C code.
 	hdrDirs := map[string]bool{}
