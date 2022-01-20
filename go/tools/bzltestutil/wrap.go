@@ -21,9 +21,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 // TestWrapperAbnormalExit is used by Wrap to indicate the child
@@ -72,8 +74,23 @@ func Wrap(pkg string) error {
 	cmd.Env = append(os.Environ(), "GO_TEST_WRAP=0")
 	cmd.Stderr = io.MultiWriter(os.Stderr, testOutputConverter.stderrConverter)
 	cmd.Stdout = io.MultiWriter(os.Stdout, testOutputConverter.stdoutConverter)
-	err := cmd.Run()
-	testOutputConverter.Close()
+
+	var err error
+	processResult := make(chan error, 1)
+	timeout := false
+
+	cancelChan := make(chan os.Signal, 1)
+	signal.Notify(cancelChan, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		processResult <- cmd.Run()
+	}()
+	select {
+	case err = <-processResult:
+	case <-cancelChan:
+		timeout = true
+		err = cmd.Process.Signal(os.Interrupt)
+	}
+	testOutputConverter.Close(timeout)
 
 	if out, ok := os.LookupEnv("XML_OUTPUT_FILE"); ok {
 		werr := writeReport(testOutputConverter.GetOutput(), pkg, out)
