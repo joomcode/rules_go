@@ -207,7 +207,7 @@ def _remote_sdk(ctx, urls, strip_prefix, sha256):
             sha256 = sha256,
             output = "go_sdk.tar.gz",
         )
-        res = ctx.execute(["tar", "-xf", "go_sdk.tar.gz", "--strip-components=1"])
+        res = ctx.execute(["tar", "-xf", "go_sdk.tar.gz", "--strip-components=1", "--no-same-owner", "--no-same-permissions"])
         if res.return_code:
             fail("error extracting Go SDK:\n" + res.stdout + res.stderr)
         ctx.delete("go_sdk.tar.gz")
