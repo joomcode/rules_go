@@ -392,6 +392,11 @@ _go_test_kwargs = {
             See [Cross compilation] for more information.
             """,
         ),
+        "nogo": attr.label(
+            doc = """
+            Custom nogo checker for rule.
+            """,
+        ),
         "_go_context_data": attr.label(default = "//:go_context_data"),
         "_testmain_additional_deps": attr.label_list(
             providers = [GoLibrary],

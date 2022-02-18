@@ -357,6 +357,11 @@ _go_binary_kwargs = {
             </ul>
             """,
         ),
+        "nogo": attr.label(
+            doc = """
+            Custom nogo checker for rule.
+            """,
+        ),
         "_go_context_data": attr.label(default = "//:go_context_data"),
     },
     "executable": True,

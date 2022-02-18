@@ -163,6 +163,11 @@ go_library = rule(
             Subject to ["Make variable"] substitution and [Bourne shell tokenization]. Only valid if `cgo = True`.
             """,
         ),
+        "nogo": attr.label(
+            doc = """
+            Custom nogo checker for rule.
+            """,
+        ),
         "_go_context_data": attr.label(default = "//:go_context_data"),
     },
     toolchains = ["@io_bazel_rules_go//go:toolchain"],
