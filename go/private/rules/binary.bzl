@@ -357,6 +357,13 @@ _go_binary_kwargs = {
             </ul>
             """,
         ),
+        "nogo": attr.label(
+            cfg = "exec",
+            doc = """
+            Custom nogo checker for rule.
+            Also you can completely disable nogo by using `@io_bazel_rules_go//:default_nogo` label.
+            """,
+        ),
         "_go_context_data": attr.label(default = "//:go_context_data"),
     },
     "executable": True,
